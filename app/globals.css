@@ -1,26 +1,417 @@
 @import "tailwindcss";
 
+/*
+  TFTG design tokens. Professional operations console: cool neutral ground,
+  deep navy chrome, one blue brand accent, five fixed status tints.
+  DM Sans is the only typeface. Light only: a dispatch desk in daylight.
+*/
+@theme {
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+
+  --color-ink: #0d1829;
+  --color-ground: #f5f7fb;
+  --color-panel: #ffffff;
+  --color-line: #e2e7ef;
+  --color-line-strong: #c2cbd9;
+  --color-muted: #55617a;
+
+  --color-fill: #e9edf5;
+  --color-fill-strong: #dce2ee;
+
+  --color-brand: #ff7a00;
+  --color-brand-strong: #e06a00;
+  --color-brand-soft: #fff1e3;
+  --color-brand-ink: #b34a00;
+
+  --color-cancelled: #b91c1c;
+
+  --radius-control: 8px;
+}
+
+/* smoui theming (outside any layer so the package always sees it) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --smoui-accent: #ff7a00;
+  --smoui-on-accent: #0d1829;
+  --smoui-inverse: #0d1829;
+  --smoui-on-inverse: #ffffff;
+  --smoui-surface: #ffffff;
+  --smoui-ink: #0d1829;
+  --smoui-positive: #15803d;
+  --smoui-negative: #b91c1c;
+  --smoui-warning: #b45309;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* smoui Sidebar draws a sparkles logo tile; TFTG brand replaces it. */
+.app-sidebar nav > div:first-child > span[aria-hidden="true"] {
+  display: none !important; /* inline style sets display:grid */
+}
+/* Folded to icons, the wide logo (the title) is gone: show the square mark in
+   the tile slot instead. */
+.app-sidebar nav > div:first-child:not(:has(> span:not([aria-hidden="true"]))) > span[aria-hidden="true"] {
+  display: block !important;
+  width: 40px !important;
+  height: 40px !important;
+  background: url("/tftg-logo-square.png") center / contain no-repeat !important;
+}
+.app-sidebar nav > div:first-child > span[aria-hidden="true"] > svg {
+  display: none;
 }
 
-@media (prefers-color-scheme: dark) {
+/* One field height. smoui FloatingInput is 56px with the label floating
+   inside; bring Combobox (label above, 46px) and the native datetime field
+   to the same 56px, label inside, so rows of mixed fields line up. */
+div:has(> label + div > input[role="combobox"]) {
+  gap: 0 !important;
+}
+div:has(> label + div > input[role="combobox"]) > label {
+  position: absolute;
+  z-index: 1;
+  left: 16px;
+  top: 9px;
+  font-size: 11px !important;
+  opacity: 0.65;
+  pointer-events: none;
+}
+input[role="combobox"] {
+  height: 56px !important;
+  border-radius: 14px !important;
+  padding: 20px 76px 0 16px !important;
+}
+span:has(+ input[role="combobox"]) {
+  display: none !important;
+}
+input[role="combobox"] ~ * {
+  top: 14px !important;
+}
+.native-field {
+  position: relative;
+}
+.native-field > label {
+  position: absolute;
+  z-index: 1;
+  left: 16px;
+  top: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.65;
+  pointer-events: none;
+}
+.native-field > input {
+  height: 56px;
+  padding: 20px 16px 0;
+  border-radius: 14px;
+}
+
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    color-scheme: light;
+  }
+
+  *,
+  ::after,
+  ::before {
+    border-color: var(--color-line);
+  }
+
+  html {
+    background: var(--color-ground);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    scrollbar-color: var(--color-line-strong) transparent;
+    scrollbar-width: thin;
+  }
+
+  body {
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--color-brand-soft);
+    color: var(--color-ink);
+  }
+
+  input[type="checkbox"],
+  input[type="radio"] {
+    accent-color: var(--color-brand);
+  }
+
+  /* No outline rings. Focus is shown as a change of fill (fields, buttons)
+     or an underline (links), like smoui's own controls. */
+  :focus-visible {
+    outline: none;
+  }
+
+  a:focus-visible {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  table {
+    font-variant-numeric: tabular-nums;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::after,
+    ::before {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 2.5rem;
+    padding: 0 1rem;
+    border: 0;
+    border-radius: var(--radius-control);
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 120ms cubic-bezier(0.22, 1, 0.36, 1),
+      border-color 120ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .btn:focus-visible {
+    filter: brightness(0.88);
+  }
+  .btn:active {
+    transform: translateY(1px);
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--color-brand);
+    color: var(--color-ink);
+  }
+  .btn-primary:hover {
+    background: var(--color-brand-strong);
+  }
+  .btn-secondary {
+    background: var(--color-fill);
+    color: var(--color-ink);
+  }
+  .btn-secondary:hover {
+    background: var(--color-fill-strong);
+  }
+  .btn-quiet {
+    background: transparent;
+    color: var(--color-brand-ink);
+    padding: 0 0.5rem;
+  }
+  .btn-quiet:hover {
+    color: var(--color-brand-ink);
+    background: var(--color-brand-soft);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--color-cancelled);
+    padding: 0 0.5rem;
+  }
+  .btn-danger:hover {
+    background: #fde4e4;
+  }
+
+  .field {
+    width: 100%;
+    min-height: 2.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-radius: var(--radius-control);
+    background: var(--color-fill);
+    color: var(--color-ink);
+    font-size: 0.9375rem;
+    transition: background-color 120ms, box-shadow 120ms;
+  }
+  .field::placeholder {
+    color: #6b7690;
+  }
+  .field:hover {
+    background: var(--color-fill-strong);
+  }
+  .field:focus {
+    background: var(--color-fill-strong);
+    outline: none;
+  }
+  .field-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-ink);
+  }
+
+  /* Data tables: calm, tabular, row highlight on hover. */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+  .data-table th {
+    padding: 0.625rem 0.75rem 0.625rem 0;
+    border-bottom: 1px solid var(--color-line);
+    text-align: left;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    white-space: nowrap;
+  }
+  .data-table td {
+    padding: 0.75rem 0.75rem 0.75rem 0;
+    border-bottom: 1px solid var(--color-line);
+    vertical-align: middle;
+  }
+  .data-table tbody tr:hover,
+  .data-table tbody tr:focus-within {
+    background: var(--color-brand-soft);
+  }
+  .data-table .num {
+    text-align: right;
+    padding-right: 0;
+  }
+
+  /* Tracking codes and invoice numbers: semibold, tabular. */
+  .code {
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .page-title {
+    font-size: clamp(1.5rem, 1.2rem + 0.9vw, 1.875rem);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+
+  .section-title {
+    font-size: 1rem;
+    font-weight: 600;
+  }
+
+  .message-error {
+    color: var(--color-cancelled);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+}
+
+
+/* Auth panel: one shipment's route. A line links the four stops; the live
+   stop carries a dot that travels down it once on load. */
+.route {
+  position: relative;
+  display: grid;
+  gap: 1.5rem;
+}
+.route li {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.route li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 19px;
+  top: 44px;
+  height: calc(100% - 40px + 1.5rem - 4px);
+  width: 2px;
+  background: rgb(255 255 255 / 0.22);
+}
+.route li[data-live]::after {
+  background: linear-gradient(var(--color-brand), rgb(255 255 255 / 0.22));
+}
+@media (prefers-reduced-motion: no-preference) {
+  .route li {
+    animation: route-in 600ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  }
+  .route li:nth-child(2) { animation-delay: 90ms; }
+  .route li:nth-child(3) { animation-delay: 180ms; }
+  .route li:nth-child(4) { animation-delay: 270ms; }
+}
+@keyframes route-in {
+  from { opacity: 0; transform: translateY(8px); }
+}
+
+/* Permanent labels on the tracking map. */
+.map-label {
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 8px;
+  background: #ffffff;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.3;
+  box-shadow: 0 2px 8px rgba(15, 27, 51, 0.25);
+}
+.map-label::before {
+  display: none;
+}
+
+/* Landing backdrop: tall columns sharing one ramp taken from the logo (orange,
+   a pale orange glow, navy, then the page colour). See components/landing-bars. */
+.bars {
+  isolation: isolate;
+}
+.bars .bar-out {
+  margin-right: -1px; /* overlap neighbours so no hairline shows between columns */
+  transform-origin: bottom;
+  /* --lift (0 to 1) is set by the pointer: columns near it swell upward */
+  transform: scaleY(calc(1 + var(--lift, 0) * 0.3));
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.bars .bar-in {
+  background: linear-gradient(
+    to top,
+    #ff7a00 0%,
+    #ff9a3d 24%,
+    #ffd7ae 48%,
+    #22365e 72%,
+    rgba(7, 12, 22, 0) 100%
+  );
+  transform-origin: bottom;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .bars .bar-in {
+    animation:
+      bar-breathe 1.5s ease-in-out infinite alternate,
+      bar-glow 3s ease-in-out infinite alternate;
+    /* neighbours start at different points, so the motion travels */
+    animation-delay: calc(var(--i) * -0.11s), calc(var(--i) * -0.23s);
+  }
+}
+@keyframes bar-breathe {
+  from {
+    transform: scaleY(calc(1 - var(--amp)));
+  }
+  to {
+    transform: scaleY(calc(1 + var(--amp) * 0.8));
+  }
+}
+@keyframes bar-glow {
+  from {
+    filter: brightness(0.93);
+  }
+  to {
+    filter: brightness(1.1);
+  }
 }
